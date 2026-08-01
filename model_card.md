@@ -38,6 +38,8 @@ Avoid code here. Pretend you are explaining the idea to a friend who does not pr
 
 > The genre, mood, energy, and acoustic metadata are used when recommending songs. Up to 5 score points are given to a song based on how well it matches a user's preferred energy level, 1 score point is given if the song matches a user's preferred mood and genre respectively, and up to 0.5 points are awarded depending on how acoustic a song is and whether a user likes acoustic songs. Originally, the acoustic score was a fixed bonus depending on whether a song passed a threshold of 0.5 acousticness, but now it scales depending on how acoustic the song is. 
 
+> **Update:** The profile and scorer now also support three optional continuous preferences — tempo, valence (how positive/happy a song sounds), and danceability. Each works like the energy term, rewarding songs whose value is close to the user's target, but carries a lighter weight (1.5 each vs. energy's 5), so energy is still the backbone. Any preference the user leaves blank is simply ignored, so a partial profile still produces recommendations.
+
 ---
 
 ## 4. Data  
@@ -82,6 +84,8 @@ Prompts:
 
 > This recommendation model does not implement tempo_bpm, valence, or danceablility as they aren't currently part of the user profile. Genres and moods use exact-string matching so nearby genres and moods, like pop -> indie pop, are still considered completely separate. With the current song catalog, there are no tracks with an energy level between 0.46 and 0.68, so users preferring a mid-energy level would not be served tracks that match their preferences as well compared to users who prefer a high or low energy level. There are also more lofi and pop tracks in the catalog compared to other genres.
 
+> **Update:** tempo_bpm, valence, and danceability are now optional parts of the user profile and the scorer uses them, so that first limitation no longer applies. The exact-string genre/mood matching and the mid-energy catalog gap still stand.
+
 ---
 
 ## 7. Evaluation  
@@ -113,6 +117,8 @@ Prompts:
 - Handling more complex user tastes  
 
 > User profiles can be extended to handle tempo, valence, and danceability parameters, with the recommendation model taking those into account as well (the current score tops out at about 7.5). Explanations can be expanded to account for those. Maybe some diversity can be handled by creating "super user profiles" for users that have varying tastes, collecting a handful of individual user profiles tailored for each specific taste a user likes. 
+
+> **Update:** The tempo/valence/danceability extension is now implemented (with all seven preferences matched, the score now tops out around 12 instead of 7.5).
 
 ---
 

@@ -1,13 +1,20 @@
 import csv
-from typing import List, Dict, Tuple
+from typing import List, Dict, Tuple, Optional
 from dataclasses import dataclass, asdict
 
 # --- scoring weights (the "algorithm recipe" knobs) ---
 # Heavy continuous backbone; light categorical bonuses on top.
-W_ENERGY = 5.0    # heavy: energy similarity does most of the work
-W_GENRE = 1.0     # slight boost for an exact genre match
-W_MOOD = 1.0      # slight boost for an exact mood match
-W_ACOUSTIC = 0.5  # slight boost when acoustic-ness agrees with the user
+W_ENERGY = 5.0        # heavy: energy similarity does most of the work
+W_GENRE = 1.0         # slight boost for an exact genre match
+W_MOOD = 1.0          # slight boost for an exact mood match
+W_ACOUSTIC = 0.5      # slight boost when acoustic-ness agrees with the user
+# Optional continuous preferences (each fires only if the user supplies it).
+# Kept lighter than W_ENERGY so energy stays the backbone, but heavy enough to
+# add real specificity when the LLM (or a user) sets them.
+W_VALENCE = 1.5       # moderate: valence/positivity closeness (0-1 scale)
+W_DANCEABILITY = 1.5  # moderate: danceability closeness (0-1 scale)
+W_TEMPO = 1.5         # moderate: tempo closeness (BPM, normalized by TEMPO_SCALE)
+TEMPO_SCALE = 60.0    # BPM gap at which tempo closeness reaches 0
 
 @dataclass
 class Song:
@@ -30,12 +37,21 @@ class Song:
 class UserProfile:
     """
     Represents a user's taste preferences.
+
+    Every field is optional (defaults to None). score_song skips any preference
+    that is None, so a sparse profile still scores on whatever is supplied. This
+    lets the LLM emit only the tastes it can infer from free text and leave the
+    rest unset, without breaking scoring.
+
     Required by tests/test_recommender.py
     """
-    favorite_genre: str
-    favorite_mood: str
-    target_energy: float
-    likes_acoustic: bool
+    favorite_genre: Optional[str] = None
+    favorite_mood: Optional[str] = None
+    target_energy: Optional[float] = None
+    likes_acoustic: Optional[bool] = None
+    target_tempo_bpm: Optional[float] = None
+    target_valence: Optional[float] = None
+    target_danceability: Optional[float] = None
 
 class Recommender:
     """
@@ -158,6 +174,38 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
                 if likes_acoustic
                 else "leans electric, matching your preference"
             )
+        )
+
+    # OPTIONAL: valence closeness (0-1 scale, same recipe as energy)
+    target_valence = user_prefs.get("target_valence")
+    if target_valence is not None:
+        song_valence = float(song["valence"])
+        closeness = 1 - abs(song_valence - float(target_valence))
+        score += W_VALENCE * closeness
+        reasons.append(
+            f"valence {song_valence:.2f} is close to your target {float(target_valence):.2f}"
+        )
+
+    # OPTIONAL: danceability closeness (0-1 scale, same recipe as energy)
+    target_danceability = user_prefs.get("target_danceability")
+    if target_danceability is not None:
+        song_danceability = float(song["danceability"])
+        closeness = 1 - abs(song_danceability - float(target_danceability))
+        score += W_DANCEABILITY * closeness
+        reasons.append(
+            f"danceability {song_danceability:.2f} is close to your target {float(target_danceability):.2f}"
+        )
+
+    # OPTIONAL: tempo closeness. Unlike the others, tempo is raw BPM (not 0-1),
+    # so the gap is normalized by TEMPO_SCALE and clamped to [0, 1] before
+    # weighting — a gap of TEMPO_SCALE BPM or more contributes nothing.
+    target_tempo = user_prefs.get("target_tempo_bpm")
+    if target_tempo is not None:
+        song_tempo = float(song["tempo_bpm"])
+        closeness = 1 - min(abs(song_tempo - float(target_tempo)) / TEMPO_SCALE, 1.0)
+        score += W_TEMPO * closeness
+        reasons.append(
+            f"tempo {song_tempo:.0f} bpm is close to your target {float(target_tempo):.0f} bpm"
         )
 
     return score, reasons
