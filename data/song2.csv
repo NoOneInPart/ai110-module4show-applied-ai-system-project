@@ -1,0 +1,89 @@
+id,title,artist,genre,mood,energy,tempo_bpm,valence,danceability,acousticness
+1,残酷な天使のテーゼ,Yoko Takahashi,anime,energetic,0.773,128.2,0.502,0.691,0.0174
+2,Du hast,Rammstein,industrial metal,happy,0.922,125.1,0.716,0.64,0.0037
+3,Creep,Radiohead,alternative,moody,0.43,91.8,0.104,0.515,0.0097
+4,Wonderwall,Oasis,britpop,energetic,0.896,174.3,0.469,0.378,0.0005
+5,Hello You,Arctic Monkeys,indie rock,groovy,0.452,169.3,0.653,0.394,0.276
+6,Duvet,bôa,indie pop,happy,0.888,93.2,0.706,0.583,0.191
+7,The Passenger,Iggy Pop,rock,happy,0.889,134.9,0.696,0.498,0.0947
+8,Disorder,Joy Division,post-punk,happy,0.798,84.7,0.74,0.32,0.0003
+9,Are 'Friends' Electric?,Tubeway Army,new wave,energetic,0.714,94.0,0.435,0.428,0.0697
+10,Making Plans For Nigel,XTC,new wave,happy,0.893,150.0,0.773,0.632,0.0143
+11,オレンジ,Creep Hyp,j-rock,happy,0.807,133.9,0.787,0.565,0.0888
+12,Unholy (feat. Kim Petras),Sam Smith;Kim Petras,pop,moody,0.472,131.1,0.238,0.714,0.013
+13,I'm Good (Blue),David Guetta;Bebe Rexha,pop,intense,0.965,128.0,0.304,0.561,0.0038
+14,Under The Influence,Chris Brown,pop,intense,0.69,117.0,0.31,0.733,0.0635
+15,"Quevedo: Bzrp Music Sessions, Vol. 52",Bizarrap;Quevedo,hip hop,energetic,0.782,128.0,0.55,0.621,0.0125
+16,Super Freaky Girl,Nicki Minaj,hip hop,happy,0.891,133.0,0.912,0.95,0.0645
+17,Jimmy Cooks (feat. 21 Savage),Drake;21 Savage,hip hop,intense,0.673,165.9,0.366,0.529,0.0003
+18,Running Up That Hill (A Deal With God),Kate Bush,r&b,moody,0.547,108.4,0.197,0.629,0.72
+19,Beat the Odds,Lil Tjay,r&b,groovy,0.625,84.8,0.478,0.498,0.054
+20,Evergreen (You Didn’t Deserve Me At All),Omar Apollo,soul,melancholic,0.336,82.0,0.31,0.697,0.598
+21,Only Love Can Hurt Like This,Paloma Faith,soul,intense,0.885,91.0,0.304,0.566,0.0958
+22,Gangsta's Paradise,Coolio;L.V.,funk,moody,0.514,80.0,0.386,0.647,0.0655
+23,Still D.R.E.,Dr. Dre;Snoop Dogg,funk,energetic,0.775,93.4,0.527,0.816,0.16
+24,September,"Earth, Wind & Fire",jazz,happy,0.832,125.9,0.979,0.697,0.168
+25,Just the Two of Us (feat. Bill Withers),"Grover Washington, Jr.;Bill Withers",jazz,groovy,0.497,95.8,0.585,0.749,0.41
+26,Experience,Ludovico Einaudi;Daniel Hope;I Virtuosi Italiani,classical,moody,0.449,92.5,0.036,0.447,0.934
+27,Nuvole Bianche,Ludovico Einaudi,classical,melancholic,0.058,132.6,0.045,0.191,0.961
+28,Ferrari,James Hype;Miggy Dela Rosa,house,happy,0.69,125.0,0.692,0.847,0.0127
+29,One Kiss (with Dua Lipa),Calvin Harris;Dua Lipa,house,energetic,0.862,124.0,0.592,0.791,0.037
+30,Lost in the Fire (feat. The Weeknd),Gesaffelstein;The Weeknd,techno,intense,0.671,101.0,0.166,0.658,0.0933
+31,Where Are You Now,Lost Frequencies;Calum Scott,edm,moody,0.636,121.0,0.262,0.671,0.515
+32,Never Gonna Give You Up,Rick Astley,disco,happy,0.939,113.3,0.914,0.721,0.115
+33,Yggdrasil,Brothers of Metal,heavy metal,energetic,0.743,87.0,0.481,0.469,0.0022
+34,One Night in Tokyo,Beast In Black,heavy metal,happy,0.977,128.0,0.727,0.469,0.0
+35,Mary On A Cross,Ghost,hard rock,energetic,0.9,130.0,0.561,0.466,0.0002
+36,In the End,Linkin Park,grunge,energetic,0.864,105.1,0.4,0.556,0.0096
+37,Atlantis,Seafret,folk,moody,0.479,166.2,0.213,0.4,0.0529
+38,Hotel California,Eagles,folk,groovy,0.508,147.1,0.609,0.579,0.0057
+39,Something in the Orange,Zach Bryan,country,melancholic,0.192,175.2,0.148,0.369,0.555
+40,You Proof,Morgan Wallen,country,energetic,0.85,119.7,0.644,0.731,0.252
+41,La Bachata,Manuel Turizo,latin,happy,0.679,125.0,0.85,0.835,0.583
+42,Me Porto Bonito,Bad Bunny;Chencho Corleone,latin,energetic,0.712,92.0,0.425,0.911,0.0901
+43,Tití Me Preguntó,Bad Bunny,reggae,intense,0.715,106.7,0.187,0.65,0.0993
+44,Seven Nation Army,The White Stripes,blues,moody,0.446,123.6,0.278,0.743,0.0039
+45,After LIKE,IVE,k-pop,happy,0.922,125.0,0.799,0.68,0.103
+46,Shut Down,BLACKPINK,k-pop,groovy,0.657,110.1,0.651,0.813,0.0027
+47,Atrévete-Te-Te,Calle 13,afrobeat,happy,0.878,88.0,0.883,0.829,0.0959
+48,Apocalypse,Cigarettes After Sex,ambient,moody,0.467,94.5,0.182,0.37,0.0205
+49,Glory Box,Portishead,trip-hop,moody,0.434,119.7,0.207,0.51,0.177
+50,Until I Found You,Stephen Sanchez,singer-songwriter,moody,0.508,101.4,0.227,0.539,0.727
+51,"Forever and Ever, Amen",Randy Travis,gospel,happy,0.68,90.6,0.704,0.701,0.303
+52,Two Thousand and Seventeen,Four Tet,electronic,groovy,0.469,75.5,0.498,0.551,0.327
+53,Glimpse of Us,Joji,pop,melancholic,0.317,169.9,0.268,0.44,0.891
+54,lovely (with Khalid),Billie Eilish;Khalid,pop,melancholic,0.296,115.3,0.12,0.351,0.934
+55,traitor,Olivia Rodrigo,pop,melancholic,0.339,100.6,0.085,0.38,0.691
+56,Someone You Loved,Lewis Capaldi,pop,groovy,0.405,109.9,0.446,0.501,0.751
+57,Photograph,Ed Sheeran,pop,melancholic,0.379,108.0,0.201,0.614,0.607
+58,All of Me,John Legend,soul,melancholic,0.264,119.9,0.331,0.422,0.922
+59,Memories,Maroon 5,pop,chill,0.327,91.0,0.595,0.775,0.841
+60,you broke me first,Tate McRae,pop,melancholic,0.373,124.1,0.082,0.667,0.785
+61,Easy On Me,Adele,soul,melancholic,0.366,142.0,0.13,0.604,0.578
+62,7 rings,Ariana Grande,pop,melancholic,0.317,140.0,0.327,0.778,0.592
+63,Fourth of July,Sufjan Stevens,singer-songwriter,melancholic,0.104,120.5,0.162,0.435,0.973
+64,rises the moon,Liana Flores,indie-pop,melancholic,0.129,137.3,0.203,0.483,0.947
+65,Get You The Moon (feat. Snøw),Kina;Snøw,sad,melancholic,0.235,118.9,0.089,0.498,0.72
+66,comethru,Jeremy Zucker,electro,chill,0.178,94.0,0.608,0.795,0.607
+67,White Ferrari,Frank Ocean,soul,melancholic,0.096,108.7,0.204,0.501,0.77
+68,Sweet Caroline,Neil Diamond,singer-songwriter,chill,0.127,63.0,0.578,0.529,0.611
+69,Another Love,Tom Odell,chill,moody,0.537,122.8,0.131,0.445,0.695
+70,Left and Right (Feat. Jung Kook of BTS),Charlie Puth;Jung Kook;BTS,pop,upbeat,0.592,101.1,0.719,0.881,0.619
+71,Starboy,The Weeknd;Daft Punk,pop,groovy,0.587,186.0,0.486,0.679,0.141
+72,Vegas (From the Original Motion Picture Soundtrack ELVIS),Doja Cat,dance,upbeat,0.601,160.0,0.74,0.801,0.0777
+73,No Role Modelz,J. Cole,hip-hop,groovy,0.521,100.0,0.494,0.69,0.324
+74,Don’t Blame Me,Taylor Swift,pop,moody,0.534,135.9,0.193,0.615,0.106
+75,Night Changes,One Direction,pop,moody,0.52,120.0,0.37,0.672,0.859
+76,Heat Waves,Glass Animals,pop,groovy,0.525,80.9,0.531,0.761,0.44
+77,"Kesariya (From ""Brahmastra"")",Pritam;Arijit Singh;Amitabh Bhattacharya,indian,groovy,0.574,94.0,0.436,0.577,0.572
+78,Ghost Rule,DECO*27,vocaloid,energetic,0.894,105.0,0.472,0.564,0.0279
+79,Song 2 - 2012 Remaster,Blur,britpop,happy,0.789,129.8,0.918,0.674,0.0018
+80,Exit Music (For A Film),Radiohead,alternative,melancholic,0.276,121.6,0.195,0.293,0.224
+81,i'm closing my eyes,potsu,lofi,chill,0.109,134.1,0.546,0.895,0.534
+82,Affection,Jinsang,lofi,chill,0.193,84.0,0.607,0.698,0.914
+83,Controlla,Idealism,lofi,groovy,0.446,80.0,0.545,0.788,0.545
+84,Luv (sic),Nujabes,lofi,happy,0.677,93.0,0.869,0.906,0.437
+85,As It Was,Harry Styles,pop,happy,0.731,173.9,0.662,0.52,0.342
+86,Caile,Luar La L,latin,energetic,0.756,121.7,0.461,0.704,0.298
+87,I Ain't Worried,OneRepublic,rock,happy,0.797,140.0,0.825,0.704,0.0826
+88,Sweater Weather,The Neighbourhood,alternative,intense,0.807,124.1,0.398,0.612,0.0495

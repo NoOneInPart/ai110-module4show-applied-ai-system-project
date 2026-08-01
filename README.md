@@ -23,7 +23,7 @@ Some prompts to answer:
 
 - What features does each `Song` use in your system
   - For example: genre, mood, energy, tempo
-  > In this setup, each song contains metadata about the id, artist, genre, mood, energy, tempo, valence, danceability, and acousticness.
+  > In this setup, each song contains metadata about the id, artist, genre, mood, energy, tempo, valence, danceability, and acousticness. The catalog (`data/song2.csv`, 88 songs) draws its audio features (energy, tempo, valence, danceability, acousticness) from the public-domain (CC0) [Spotify Tracks Dataset – Audio Features](https://www.kaggle.com/datasets/saichaitanyareddyai/spotify-tracks-dataset-audio-features) on Kaggle. `mood` is derived from each track's valence and energy, since the source dataset has no mood field.
 - What information does your `UserProfile` store
   > The UserProfile stores a user's favorite genre, mood, their preferred energy level, and whether they like acoustic tracks (people don't?).
 - How does your `Recommender` compute a score for each song
@@ -80,40 +80,40 @@ Paste a sample of your recommender's output here as a text block so a reader can
 ============================================================
   Profile: genre=pop, mood=happy, energy=0.95, likes_acoustic=False
 ------------------------------------------------------------
-  1. Neon Echo - Sunrise City  (score: 6.76)
-       [pop / happy]
-       why:
-         - energy 0.82 is close to your target 0.95
-         - matches your favorite genre (pop)
-         - matches your mood (happy)
-         - acousticness 0.18 leans electric, matching your preference
-
-  2. Max Pulse - Gym Hero  (score: 6.38)
+  1. David Guetta;Bebe Rexha - I'm Good (Blue)  (score: 6.42)
        [pop / intense]
        why:
-         - energy 0.93 is close to your target 0.95
-         - matches your favorite genre (pop)
-         - acousticness 0.05 leans electric, matching your preference
-
-  3. Daft Punk - Get Lucky  (score: 5.78)
-       [disco / happy]
-       why:
-         - energy 0.81 is close to your target 0.95
-         - matches your mood (happy)
-         - acousticness 0.04 leans electric, matching your preference
-
-  4. Rammstein - Du Hast  (score: 5.45)
-       [industrial metal / intense]
-       why:
          - energy 0.96 is close to your target 0.95
+         - matches your favorite genre (pop)
          - acousticness 0.00 leans electric, matching your preference
 
-  5. Indigo Parade - Rooftop Lights  (score: 5.38)
-       [indie pop / happy]
+  2. Rick Astley - Never Gonna Give You Up  (score: 6.39)
+       [disco / happy]
        why:
-         - energy 0.76 is close to your target 0.95
+         - energy 0.94 is close to your target 0.95
          - matches your mood (happy)
-         - acousticness 0.35 leans electric, matching your preference
+         - acousticness 0.12 leans electric, matching your preference
+
+  3. Beast In Black - One Night in Tokyo  (score: 6.37)
+       [heavy metal / happy]
+       why:
+         - energy 0.98 is close to your target 0.95
+         - matches your mood (happy)
+         - acousticness 0.00 leans electric, matching your preference
+
+  4. Rammstein - Du hast  (score: 6.36)
+       [industrial metal / happy]
+       why:
+         - energy 0.92 is close to your target 0.95
+         - matches your mood (happy)
+         - acousticness 0.00 leans electric, matching your preference
+
+  5. IVE - After LIKE  (score: 6.31)
+       [k-pop / happy]
+       why:
+         - energy 0.92 is close to your target 0.95
+         - matches your mood (happy)
+         - acousticness 0.10 leans electric, matching your preference
 
 
 ============================================================
@@ -121,160 +121,44 @@ Paste a sample of your recommender's output here as a text block so a reader can
 ============================================================
   Profile: genre=lofi, mood=chill, energy=0.4, likes_acoustic=True
 ------------------------------------------------------------
-  1. LoRoom - Midnight Coding  (score: 7.26)
+  1. Jinsang - Affection  (score: 6.42)
        [lofi / chill]
        why:
-         - energy 0.42 is close to your target 0.40
+         - energy 0.19 is close to your target 0.40
          - matches your favorite genre (lofi)
          - matches your mood (chill)
-         - acousticness 0.71 leans acoustic like you prefer
+         - acousticness 0.91 leans acoustic like you prefer
 
-  2. Paper Lanterns - Library Rain  (score: 7.18)
+  2. Maroon 5 - Memories  (score: 6.06)
+       [pop / chill]
+       why:
+         - energy 0.33 is close to your target 0.40
+         - matches your mood (chill)
+         - acousticness 0.84 leans acoustic like you prefer
+
+  3. Idealism - Controlla  (score: 6.04)
+       [lofi / groovy]
+       why:
+         - energy 0.45 is close to your target 0.40
+         - matches your favorite genre (lofi)
+         - acousticness 0.55 leans acoustic like you prefer
+
+  4. potsu - i'm closing my eyes  (score: 5.81)
        [lofi / chill]
        why:
-         - energy 0.35 is close to your target 0.40
+         - energy 0.11 is close to your target 0.40
          - matches your favorite genre (lofi)
          - matches your mood (chill)
-         - acousticness 0.86 leans acoustic like you prefer
+         - acousticness 0.53 leans acoustic like you prefer
 
-  3. LoRoom - Focus Flow  (score: 6.39)
-       [lofi / focused]
+  5. Lewis Capaldi - Someone You Loved  (score: 5.35)
+       [pop / groovy]
        why:
-         - energy 0.40 is close to your target 0.40
-         - matches your favorite genre (lofi)
-         - acousticness 0.78 leans acoustic like you prefer
-
-  4. Orbit Bloom - Spacewalk Thoughts  (score: 5.86)
-       [ambient / chill]
-       why:
-         - energy 0.28 is close to your target 0.40
-         - matches your mood (chill)
-         - acousticness 0.92 leans acoustic like you prefer
-
-  5. Slow Stereo - Coffee Shop Stories  (score: 5.29)
-       [jazz / relaxed]
-       why:
-         - energy 0.37 is close to your target 0.40
-         - acousticness 0.89 leans acoustic like you prefer
-
-
-============================================================
-  TOP RECOMMENDATIONS - deep intense rock
-============================================================
-  Profile: genre=rock, mood=intense, energy=0.95, likes_acoustic=False
-------------------------------------------------------------
-  1. Voltline - Storm Runner  (score: 7.25)
-       [rock / intense]
-       why:
-         - energy 0.91 is close to your target 0.95
-         - matches your favorite genre (rock)
-         - matches your mood (intense)
-         - acousticness 0.10 leans electric, matching your preference
-
-  2. Rammstein - Du Hast  (score: 6.45)
-       [industrial metal / intense]
-       why:
-         - energy 0.96 is close to your target 0.95
-         - matches your mood (intense)
-         - acousticness 0.00 leans electric, matching your preference
-
-  3. Max Pulse - Gym Hero  (score: 6.38)
-       [pop / intense]
-       why:
-         - energy 0.93 is close to your target 0.95
-         - matches your mood (intense)
-         - acousticness 0.05 leans electric, matching your preference
-
-  4. Pulsewave - Neon Tide  (score: 5.14)
-       [house / energetic]
-       why:
-         - energy 0.88 is close to your target 0.95
-         - acousticness 0.02 leans electric, matching your preference
-
-  5. Daft Punk - Get Lucky  (score: 4.78)
-       [disco / happy]
-       why:
-         - energy 0.81 is close to your target 0.95
-         - acousticness 0.04 leans electric, matching your preference
-
-
-============================================================
-  TOP RECOMMENDATIONS - edge: acoustic headbanger
-============================================================
-  Profile: genre=rock, mood=intense, energy=0.95, likes_acoustic=True
-------------------------------------------------------------
-  1. Voltline - Storm Runner  (score: 6.85)
-       [rock / intense]
-       why:
-         - energy 0.91 is close to your target 0.95
-         - matches your favorite genre (rock)
-         - matches your mood (intense)
-         - acousticness 0.10 leans acoustic like you prefer
-
-  2. Rammstein - Du Hast  (score: 5.95)
-       [industrial metal / intense]
-       why:
-         - energy 0.96 is close to your target 0.95
-         - matches your mood (intense)
-         - acousticness 0.00 leans acoustic like you prefer
-
-  3. Max Pulse - Gym Hero  (score: 5.93)
-       [pop / intense]
-       why:
-         - energy 0.93 is close to your target 0.95
-         - matches your mood (intense)
-         - acousticness 0.05 leans acoustic like you prefer
-
-  4. Pulsewave - Neon Tide  (score: 4.66)
-       [house / energetic]
-       why:
-         - energy 0.88 is close to your target 0.95
-         - acousticness 0.02 leans acoustic like you prefer
-
-  5. Neon Echo - Sunrise City  (score: 4.44)
-       [pop / happy]
-       why:
-         - energy 0.82 is close to your target 0.95
-         - acousticness 0.18 leans acoustic like you prefer
-
-
-============================================================
-  TOP RECOMMENDATIONS - edge: happy classical
-============================================================
-  Profile: genre=classical, mood=happy, energy=0.5, likes_acoustic=True
-------------------------------------------------------------
-  1. E. Marchetti - Nocturne in Blue  (score: 4.97)
-       [classical / calm]
-       why:
-         - energy 0.20 is close to your target 0.50
-         - matches your favorite genre (classical)
-         - acousticness 0.95 leans acoustic like you prefer
-
-  2. LoRoom - Midnight Coding  (score: 4.96)
-       [lofi / chill]
-       why:
-         - energy 0.42 is close to your target 0.50
-         - acousticness 0.71 leans acoustic like you prefer
-
-  3. Mara Silk - Velvet Hours  (score: 4.90)
-       [r&b / romantic]
-       why:
-         - energy 0.45 is close to your target 0.50
-         - acousticness 0.30 leans acoustic like you prefer
-
-  4. LoRoom - Focus Flow  (score: 4.89)
-       [lofi / focused]
-       why:
-         - energy 0.40 is close to your target 0.50
-         - acousticness 0.78 leans acoustic like you prefer
-
-  5. Indigo Parade - Rooftop Lights  (score: 4.88)
-       [indie pop / happy]
-       why:
-         - energy 0.76 is close to your target 0.50
-         - matches your mood (happy)
-         - acousticness 0.35 leans acoustic like you prefer
+         - energy 0.41 is close to your target 0.40
+         - acousticness 0.75 leans acoustic like you prefer
 ```
+
+> Note: the high-energy example shows a quirk the catalog deliberately keeps — *Du hast* is scored "happy" (mood is derived from Spotify's valence, which is high for the track), and it sits comfortably beside disco and k-pop because energy dominates the score. The lofi example matches cleanly on genre now that real lofi tracks (potsu, Idealism, Jinsang) are in the catalog.
 
 ---
 

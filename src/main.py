@@ -80,7 +80,7 @@ def print_recommendations(name: str, user_prefs: dict, songs: list) -> None:
 
 
 def main() -> None:
-    songs = load_songs("data/songs.csv")
+    songs = load_songs("data/song2.csv")
 
     for name, user_prefs in PROFILES.items():
         print_recommendations(name, user_prefs, songs)
