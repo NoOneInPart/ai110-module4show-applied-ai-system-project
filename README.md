@@ -55,8 +55,15 @@ pip install -r requirements.txt
 3. Run the app:
 
 ```bash
-python -m src.main
+python -m src.main        # interactive: describe what you want in plain language
+python -m src.main demo   # deterministic sample profiles (reproducible, no key needed)
 ```
+
+Natural-language mode uses Google AI Studio (Gemini) to turn your description
+into a taste profile and pick songs. To enable it, set `GEMINI_API_KEY` in your
+environment or a `.env` file (`GEMINI_API_KEY=...`). Without a key, `nl` mode
+falls back to a short manual questionnaire (press Enter to accept defaults), so
+the app always runs.
 
 ### Running Tests
 

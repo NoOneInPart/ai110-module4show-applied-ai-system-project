@@ -1,0 +1,4 @@
+The listener said:
+{{REQUEST}}
+
+Return the taste profile as JSON.

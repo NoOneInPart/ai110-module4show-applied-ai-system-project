@@ -1,0 +1,61 @@
+%% Music Recommender - Constrained RAG Architecture
+%% Retriever = deterministic scorer (narrows catalog to candidates)
+%% Generation = LLM grounded in the retrieved candidates
+%% Data flow: input -> retrieve -> generate -> output (single pass, no loop)
+%% Human + testing checkpoints highlighted (green = human, orange = guardrail/testing)
+
+flowchart TD
+    User([" User: natural-language request<br/>e.g. 'acoustic but high-energy for coding'"]):::human
+
+    subgraph GEN1["LLM call 1 — Profile Extraction"]
+        Extract["text -> UserProfile<br/>(genre, mood, target_energy, likes_acoustic)"]
+        ValidateP["Guardrail: validate fields<br/>types / ranges / allowed values"]:::guard
+        Extract --> ValidateP
+    end
+
+    subgraph RETRIEVE["Retriever (deterministic app logic)"]
+        Score["score_song()<br/>score every song + reasons"]
+        Recommend["recommend_songs()<br/>rank -> WIDE candidate set (top ~15)"]
+        Score --> Recommend
+    end
+
+    Catalog[("data/songs.csv<br/>song catalog")]
+
+    subgraph GEN2["LLM call 2 — Grounded Selection"]
+        Select["pick & order final top-5<br/>FROM candidates, with reasoning"]
+        Constrain["Guardrail: output constrained<br/>to retrieved candidate ids only<br/>(no hallucinated songs)"]:::guard
+        Select --> Constrain
+    end
+
+    Fallback["Fallback: provider down / no API key<br/>/ invalid output -> deterministic top-5"]:::guard
+    Logger["Run log: each LLM call,<br/>profile, candidates, final picks"]:::guard
+
+    Output([" Final recommendations + reasoning<br/>(grounded in real scores)"]):::human
+    HumanReview["Human review<br/>inspects log: profile sane?<br/>picks grounded?"]:::human
+
+    subgraph TESTS["Testing System (offline)"]
+        UnitTests["pytest: profile validation,<br/>fallback fires, picks are a<br/>subset of candidates"]:::test
+        Metamorphic["Property checks:<br/>higher target_energy never lowers<br/>a high-energy song's rank"]:::test
+    end
+
+    %% ---- data flow ----
+    User --> Extract
+    ValidateP -- "UserProfile" --> Score
+    Score -. "reasons = ground truth" .-> Constrain
+    Recommend -- "candidate set" --> Select
+    Recommend --> Catalog
+    Constrain --> Output
+    Output --> HumanReview
+
+    GEN1 -. "on failure" .-> Fallback
+    GEN2 -. "on failure" .-> Fallback
+    Fallback --> Output
+    GEN1 --> Logger
+    GEN2 --> Logger
+
+    TESTS -. "exercise before release" .-> RETRIEVE
+    TESTS -. "exercise before release" .-> GEN2
+
+    classDef human fill:#d4f7d4,stroke:#2e7d32,stroke-width:2px,color:#111;
+    classDef guard fill:#ffe6cc,stroke:#e65100,stroke-width:2px,color:#111;
+    classDef test fill:#ffe6cc,stroke:#e65100,stroke-width:1px,color:#111,stroke-dasharray: 4 3;

@@ -1,0 +1,7 @@
+Listener profile:
+{{PROFILE}}
+
+Candidate songs (already scored; higher score = stronger match):
+{{CANDIDATES}}
+
+Return your top {{FINAL_K}} picks as JSON.
