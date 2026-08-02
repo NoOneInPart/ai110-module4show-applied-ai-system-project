@@ -1,7 +1,10 @@
-Listener profile:
+The listener asked for:
+{{REQUEST}}
+
+Listener profile (built from that request):
 {{PROFILE}}
 
 Candidate songs (already scored; higher score = stronger match):
 {{CANDIDATES}}
 
-Return your top {{FINAL_K}} picks as JSON.
+Pick the top {{FINAL_K}} and write the intro, as JSON.

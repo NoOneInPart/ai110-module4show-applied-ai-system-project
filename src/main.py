@@ -92,16 +92,25 @@ def print_recommendations(name: str, user_prefs: dict, songs: list) -> None:
         print()
 
 
-def _print_llm_run(run) -> None:
-    """Render an LLM-driven run: the friendly intro, then the picks."""
+def _print_llm_header(profile_intro) -> None:
+    """Printed the moment the profile call returns, before selection runs, so the
+    user sees the reflection immediately instead of waiting for the second call."""
     print()
     print("=" * 60)
     print("  YOUR RECOMMENDATIONS")
     print("=" * 60)
-    if run.intro:
-        print(f"  {run.intro}")
+    if profile_intro:
+        print(f"  {profile_intro}")
+    sys.stdout.flush()
+
+
+def _print_llm_picks(selection_intro, picks) -> None:
+    """Printed once selection returns: the picks-grounded intro, then the songs."""
     print("-" * 60)
-    for rank, (song, score, explanation) in enumerate(run.picks, start=1):
+    if selection_intro:
+        print(f"  {selection_intro}")
+    print()
+    for rank, (song, score, explanation) in enumerate(picks, start=1):
         print(f"  {rank}. {song['artist']} - {song['title']}  (score: {score:.2f})")
         print(f"       [{song['genre']} / {song['mood']}]")
         print("       why:")
@@ -170,11 +179,13 @@ def run_interactive(songs: list) -> None:
 
     text = _read_line("\nWhat would you like to hear? ", "")
     if text:
-        run = recommend_from_text(text, songs, client)
+        # The header + profile intro print via the callback the instant the
+        # first call returns; the picks print here once selection comes back.
+        run = recommend_from_text(text, songs, client, on_profile=_print_llm_header)
         if run.error:
             print("\n" + run.error)              # pipe Gemini's message through
         elif run.picks:
-            _print_llm_run(run)
+            _print_llm_picks(run.intro, run.picks)
             return
         else:
             print("\n(Couldn't read a taste from that - let's do it manually.)")
@@ -188,6 +199,13 @@ def run_demo(songs: list) -> None:
 
 
 def main() -> None:
+    # Song titles (e.g. 残酷な天使のテーゼ) and Gemini's replies can contain
+    # non-ASCII characters; force UTF-8 so a Windows console can't crash on them.
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
+
     songs = load_songs(CATALOG)
     # Interactive natural-language mode (the AI feature) is the default;
     # `demo` runs the reproducible deterministic sample profiles.

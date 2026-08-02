@@ -107,12 +107,13 @@ def test_select_known_gate_and_id_constraint():
     profile = validate_profile({"target_energy": 0.9, "favorite_genre": "pop"})
     candidates = recommend_songs({"target_energy": 0.9, "favorite_genre": "pop"}, songs, k=15)
 
-    resp = json.dumps({"picks": [
+    resp = json.dumps({"intro": "Great picks ahead:", "picks": [
         {"id": 1, "known": True, "reasons": ["a great synth hook", "certified banger"]},
         {"id": 999, "known": True, "reasons": ["invented song"]},   # invalid id -> dropped
         {"id": 3, "known": False, "reasons": ["should be ignored"]},  # not known -> deterministic
     ]})
-    picks = select_recommendations(profile, candidates, FakeClient(resp))
+    intro, picks = select_recommendations(profile, candidates, FakeClient(resp))
+    assert intro == "Great picks ahead:"                    # selection-stage intro parsed
     ids = [song["id"] for song, _, _ in picks]
 
     assert 999 not in ids                                   # invented id dropped
@@ -121,9 +122,10 @@ def test_select_known_gate_and_id_constraint():
     assert set(ids) <= cand_ids                             # subset of retrieved candidates
 
     expl1 = next(e for s, _, e in picks if s["id"] == 1)
-    assert "great synth hook" in expl1                      # known=True -> LLM prose used
+    assert "great synth hook" in expl1                      # known=True -> LLM prose added
+    assert "energy" in expl1                                # ...on top of the deterministic facts
     expl3 = next(e for s, _, e in picks if s["id"] == 3)
-    assert "should be ignored" not in expl3                 # known=False -> deterministic
+    assert "should be ignored" not in expl3                 # known=False -> deterministic only
     assert "energy" in expl3
 
     assert len(picks) == min(FINAL_K, len(candidates))      # backfilled to FINAL_K
@@ -136,7 +138,7 @@ def test_select_scores_are_deterministic_not_invented():
     truth = {song["id"]: score for song, score, _ in candidates}
 
     resp = json.dumps({"picks": [{"id": 1, "known": True, "reasons": ["x"]}]})
-    picks = select_recommendations(profile, candidates, FakeClient(resp))
+    _, picks = select_recommendations(profile, candidates, FakeClient(resp))
     for song, score, _ in picks:
         assert score == truth[song["id"]]                   # score stays the deterministic one
 
@@ -145,7 +147,8 @@ def test_select_falls_back_to_deterministic_top_k():
     songs = make_songs()
     profile = validate_profile({"target_energy": 0.5})
     candidates = recommend_songs({"target_energy": 0.5}, songs, k=15)
-    picks = select_recommendations(profile, candidates, FakeClient(""))  # model fails
+    intro, picks = select_recommendations(profile, candidates, FakeClient(""))  # model fails
+    assert intro is None
     assert picks == candidates[:FINAL_K]
 
 
@@ -155,12 +158,19 @@ def test_select_falls_back_to_deterministic_top_k():
 def test_recommend_from_text_success():
     songs = make_songs()
     profile_resp = json.dumps({"favorite_genre": "pop", "target_energy": 0.9,
-                               "note": "Here you go:"})
-    select_resp = json.dumps({"picks": [{"id": 1, "known": True, "reasons": ["hook"]}]})
-    run = recommend_from_text("upbeat pop", songs, FakeClient(profile_resp, select_resp))
+                               "note": "Cranking it up:"})
+    select_resp = json.dumps({"intro": "Here's the set:",
+                              "picks": [{"id": 1, "known": True, "reasons": ["hook"]}]})
+    seen_profile_intro = []
+    run = recommend_from_text("upbeat pop", songs,
+                              FakeClient(profile_resp, select_resp),
+                              on_profile=seen_profile_intro.append)
 
     assert run.error is None
-    assert run.intro == "Here you go:"
+    # Profile intro is delivered immediately via the callback (printed first)...
+    assert seen_profile_intro == ["Cranking it up:"]
+    # ...and the return carries only the picks-grounded selection intro.
+    assert run.intro == "Here's the set:"
     assert run.picks and run.picks[0][0]["id"] == 1
     catalog_ids = {s["id"] for s in songs}
     assert all(song["id"] in catalog_ids for song, _, _ in run.picks)

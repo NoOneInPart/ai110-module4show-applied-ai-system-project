@@ -191,15 +191,17 @@ def select_recommendations(
     profile: UserProfile,
     candidates: List[Tuple[Dict, float, str]],
     client: Any,
-) -> List[Tuple[Dict, float, str]]:
-    """LLM picks the final FINAL_K from the retrieved candidates.
+    request_text: str = "",
+) -> Tuple[Optional[str], List[Tuple[Dict, float, str]]]:
+    """LLM picks the final FINAL_K from the retrieved candidates and writes a
+    short intro grounded in those picks. Returns (intro, picks).
 
     Guardrails: picks are constrained to the candidate ids (invented ids
     dropped); the score is always the deterministic one; a pick's reasons are
     trusted only when `known` is true (the model recognizes the real song),
     otherwise that song's deterministic reasons are used. Falls back to the
-    deterministic top-k on any failure, and backfills to FINAL_K if the model
-    returns fewer.
+    deterministic top-k on any failure (intro None), and backfills to FINAL_K if
+    the model returns fewer.
     """
     by_id = {song["id"]: (song, score, reasons) for song, score, reasons in candidates}
     fallback = candidates[:FINAL_K]
@@ -213,14 +215,22 @@ def select_recommendations(
     )
     user = (
         _load_prompt("select_user")
+        .replace("{{REQUEST}}", request_text)
         .replace("{{PROFILE}}", prof_json)
         .replace("{{CANDIDATES}}", cand_json)
         .replace("{{FINAL_K}}", str(FINAL_K))
     )
 
-    picks = _picks_from(_parse_json(client.complete(system, user, json_output=True)))
+    data = _parse_json(client.complete(system, user, json_output=True))
+    intro = None
+    if isinstance(data, dict):
+        maybe = data.get("intro")
+        if isinstance(maybe, str) and maybe.strip():
+            intro = maybe.strip()
+
+    picks = _picks_from(data)
     if not picks:
-        return fallback
+        return (intro, fallback)
 
     result: List[Tuple[Dict, float, str]] = []
     seen = set()
@@ -236,9 +246,13 @@ def select_recommendations(
         good_reasons = [
             r.strip() for r in reasons if isinstance(r, str) and r.strip()
         ] if isinstance(reasons, list) else []
-        # Trust the model's prose only when it says it knows the real song.
+        # The deterministic facts are ALWAYS shown (accurate, never invented).
+        # For a song the model recognizes, its personified description leads,
+        # with those facts underneath as grounding.
         if pick.get("known") is True and good_reasons:
             explanation = "\n".join(good_reasons)
+            if det_reasons:
+                explanation += "\n" + det_reasons
         else:
             explanation = det_reasons
         result.append((song, score, explanation))
@@ -246,7 +260,7 @@ def select_recommendations(
             break
 
     if not result:
-        return fallback
+        return (intro, fallback)
 
     # Backfill from the deterministic order if the model returned too few.
     if len(result) < FINAL_K:
@@ -256,22 +270,37 @@ def select_recommendations(
                 seen.add(candidate[0]["id"])
                 if len(result) >= FINAL_K:
                     break
-    return result
+    return (intro, result)
 
 
 # --------------------------------------------------------------------------
 # Orchestrator
 # --------------------------------------------------------------------------
-def recommend_from_text(text: str, songs: List[Dict], client: Any) -> RecommendationRun:
+def recommend_from_text(
+    text: str,
+    songs: List[Dict],
+    client: Any,
+    on_profile: Optional[Any] = None,
+) -> RecommendationRun:
     """Full pipeline: extract -> retrieve (wide) -> select. Any failure degrades
-    to a deterministic result; a no-signal prompt returns the model's error."""
+    to a deterministic result; a no-signal prompt returns the model's error.
+
+    `on_profile`, if given, is called with the profile-stage intro (Optional[str])
+    the moment the first LLM call succeeds -- so the UI can print it immediately,
+    before the slower selection call runs. The returned RecommendationRun.intro
+    then holds only the selection-stage intro (grounded in the actual picks)."""
     result = extract_profile(text, client)
     if result.error:
         return RecommendationRun(error=result.error)
     if result.profile is None:
         return RecommendationRun()  # quiet failure -> caller falls back to manual
 
+    if on_profile is not None:
+        on_profile(result.intro)   # print the reflection now, before selection
+
     prefs = asdict(result.profile)
     candidates = recommend_songs(prefs, songs, k=CANDIDATE_WIDTH)
-    picks = select_recommendations(result.profile, candidates, client)
-    return RecommendationRun(picks=picks, intro=result.intro)
+    selection_intro, picks = select_recommendations(
+        result.profile, candidates, client, request_text=text
+    )
+    return RecommendationRun(picks=picks, intro=selection_intro)

@@ -1,57 +1,59 @@
 %% Music Recommender - Constrained RAG Architecture
 %% Retriever = deterministic scorer (narrows catalog to candidates)
-%% Generation = LLM grounded in the retrieved candidates
-%% Data flow: input -> retrieve -> generate -> output (single pass, no loop)
+%% Generation = two LLM calls, grounded in the retrieved candidates
+%% Data flow: input -> extract -> retrieve -> select -> output (single pass, no loop)
 %% Human + testing checkpoints highlighted (green = human, orange = guardrail/testing)
 
 flowchart TD
-    User([" User: natural-language request<br/>e.g. 'acoustic but high-energy for coding'"]):::human
+    User([" User: natural-language request<br/>e.g. 'soundtrack to watch paint dry to'"]):::human
 
-    subgraph GEN1["LLM call 1 — Profile Extraction"]
-        Extract["text -> UserProfile<br/>(genre, mood, target_energy, likes_acoustic)"]
-        ValidateP["Guardrail: validate fields<br/>types / ranges / allowed values"]:::guard
+    subgraph GEN1["LLM call 1 - Profile Extraction (src/llm.py: extract_profile)"]
+        Extract["text -> UserProfile fields<br/>+ generic 'note' (vibe only,<br/>no specific-song promises)<br/>OR {error} if no signal"]
+        ValidateP["Guardrail: validate_profile()<br/>clamp ranges / coerce types<br/>(shared with manual entry)"]:::guard
         Extract --> ValidateP
     end
 
-    subgraph RETRIEVE["Retriever (deterministic app logic)"]
-        Score["score_song()<br/>score every song + reasons"]
-        Recommend["recommend_songs()<br/>rank -> WIDE candidate set (top ~15)"]
+    PrintIntro(["Printed immediately:<br/>profile intro / error"]):::human
+
+    subgraph RETRIEVE["Retriever (deterministic, src/recommender.py)"]
+        Score["score_song()<br/>score every song + reasons<br/>(ground truth, never invented)"]
+        Recommend["recommend_songs()<br/>rank -> WIDE candidate set<br/>(top CANDIDATE_WIDTH ~15)"]
         Score --> Recommend
     end
 
-    Catalog[("data/songs.csv<br/>song catalog")]
+    Catalog[("data/song2.csv<br/>88 real songs<br/>(CC0 Spotify dataset)")]
 
-    subgraph GEN2["LLM call 2 — Grounded Selection"]
-        Select["pick & order final top-5<br/>FROM candidates, with reasoning"]
-        Constrain["Guardrail: output constrained<br/>to retrieved candidate ids only<br/>(no hallucinated songs)"]:::guard
+    subgraph GEN2["LLM call 2 - Grounded Selection (src/llm.py: select_recommendations)"]
+        Select["pick & order final top-K<br/>FROM candidates + write an<br/>intro grounded in the picks"]
+        Constrain["Guardrail: ids constrained to<br/>candidates; 'known' gate -<br/>personified reasons only for<br/>recognized songs, else deterministic"]:::guard
         Select --> Constrain
     end
 
-    Fallback["Fallback: provider down / no API key<br/>/ invalid output -> deterministic top-5"]:::guard
-    Logger["Run log: each LLM call,<br/>profile, candidates, final picks"]:::guard
+    ManualFallback["Manual entry fallback<br/>(main.py): defaults in ( ),<br/>Enter accepts - EOF-safe,<br/>always reproducible"]:::guard
 
-    Output([" Final recommendations + reasoning<br/>(grounded in real scores)"]):::human
-    HumanReview["Human review<br/>inspects log: profile sane?<br/>picks grounded?"]:::human
+    Output([" Final picks: deterministic score<br/>+ facts, always shown; personified<br/>reasons added when known"]):::human
+    HumanReview["Human review<br/>(model_card.md, this diagram):<br/>picks grounded? fallback sane?"]:::human
 
-    subgraph TESTS["Testing System (offline)"]
-        UnitTests["pytest: profile validation,<br/>fallback fires, picks are a<br/>subset of candidates"]:::test
-        Metamorphic["Property checks:<br/>higher target_energy never lowers<br/>a high-energy song's rank"]:::test
+    subgraph TESTS["Testing System - tests/test_llm.py (offline, FakeClient)"]
+        UnitTests["profile validation clamps;<br/>error/intro contract;<br/>picks subset of candidates"]:::test
+        Grounding["known-gate: personified reasons<br/>only when known=true; score<br/>always the deterministic one"]:::test
+        Metamorphic["recommender property checks:<br/>scoring deterministic; energy<br/>closeness is monotonic"]:::test
     end
 
     %% ---- data flow ----
     User --> Extract
     ValidateP -- "UserProfile" --> Score
+    ValidateP -. "intro/error" .-> PrintIntro
     Score -. "reasons = ground truth" .-> Constrain
-    Recommend -- "candidate set" --> Select
+    Recommend -- "candidate set + request text" --> Select
     Recommend --> Catalog
     Constrain --> Output
     Output --> HumanReview
 
-    GEN1 -. "on failure" .-> Fallback
-    GEN2 -. "on failure" .-> Fallback
-    Fallback --> Output
-    GEN1 --> Logger
-    GEN2 --> Logger
+    GEN1 -. "no key / no signal / failure" .-> ManualFallback
+    GEN2 -. "provider down / invalid output" .-> Fallback2["Fallback: deterministic top-K<br/>(same shape, no key needed)"]:::guard
+    ManualFallback --> Output
+    Fallback2 --> Output
 
     TESTS -. "exercise before release" .-> RETRIEVE
     TESTS -. "exercise before release" .-> GEN2
