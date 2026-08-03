@@ -84,3 +84,5 @@
 > 
 > - **Flawed Suggestion:** When developing the part where Gemini would be allowed to write a short introduction for the songs picked, it initially attempted to design it such that it waited for a response from both calls to Gemini before printing, so I guided it to design it in such a way that the responses are immediately printed out once received. It made better sense to me.
 > - **Helpful Suggestion:** Claude suggested and wrote the offline `FakeClient` testing structure in `tests/test_llm.py`, allowing 14 automated unit tests to verify guardrails, parsing, and fallback logic without needing an API key or making unnecessary calls to Gemini that unnecessarily impact usage limits.
+>
+> Also, I got to learn exactly how much of a bad idea it is to do everything in one chat. Keeping all the old context is cool, and it comes at the expense of using absolutely everything as context and the next thing I know I'm blowing through entire dollars of credits per prompt. I've got to learn to switch to new chats more often. And use Sonnet more. This did get me to check out Google Antigravity to help finish the documentation though, so there is a silver lining.
