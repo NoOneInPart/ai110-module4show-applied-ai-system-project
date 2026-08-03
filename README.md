@@ -1,43 +1,53 @@
-# 🎵 Music Recommender Simulation
+# 🎵 musicmachine 0.001a-rc2 (yes, that's what I'm calling it)
 
-## Project Summary
+## Original Project (Modules 1-3)
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
+This project began as **Music Recommender Simulation**, a small rule-based recommender built to explore how AI systems turn data into predictions. The original goal was to represent songs and a listener's taste as structured data, design a transparent scoring rule (not a black-box model) that ranks a catalog against that taste profile, and reflect on where bias or unfairness could creep into a system like this. It shipped as a CLI tool: a handful of hardcoded taste profiles were scored against a small song catalog using a deterministic formula, and the top matches were printed with a plain-language explanation of why each song scored the way it did.
 
 ---
 
-## How The System Works
+## Module 4: What's New
 
-Explain your design in plain language.
+This module adds two AI-powered elements. 
 
-Some prompts to answer:
+The *specialized model* element uses a prompt-tuned Gemini Flash Lite model to allow the user to textually describe the vibes of the songs they want to hear, and Gemini builds a user taste profile based on that prompt. 
 
-- What features does each `Song` use in your system
-  - For example: genre, mood, energy, tempo
-  > In this setup, each song contains metadata about the id, artist, genre, mood, energy, tempo, valence, danceability, and acousticness. The catalog (`data/song2.csv`, 88 songs) draws its audio features (energy, tempo, valence, danceability, acousticness) from the public-domain (CC0) [Spotify Tracks Dataset – Audio Features](https://www.kaggle.com/datasets/saichaitanyareddyai/spotify-tracks-dataset-audio-features) on Kaggle. `mood` is derived from each track's valence and energy, since the source dataset has no mood field.
-- What information does your `UserProfile` store
-  > The UserProfile stores a user's favorite genre, mood, their preferred energy level, and whether they like acoustic tracks (people don't?).
-- How does your `Recommender` compute a score for each song
-  > As of this commit, the score is built around a base score (called the backbone) and some bonuses for categorical matches. The backbone (weight 5.0) rewards how closely a song's energy matches the user's preferred energy level, so a song that "sounds like" what the user wants ranks highly even if its labels don't match exactly. On top of that, small bonuses nudge the ranking: +1.0 if the song's genre matches the user's favorite, +1.0 if the mood matches, and up to +0.5 depending on how strongly the song's acoustic-ness agrees with the user's `likes_acoustic` preference. The acoustic term is a pure bonus that scales with how acoustic a song is (never a penalty), so a fully-acoustic song earns the whole +0.5 for an acoustic-lover while an electric one earns little or nothing, and a user who simply hasn't asked for acoustic tracks isn't punished for songs that happen to be acoustic. This setup prevents the algorithm from overwhelmingly recommending songs that fit into specific categories based on the specific genre name or mood, but it does mean most of the songs recommended have similar energy levels.
-- How do you choose which songs to recommend
-  > Every song in the catalog is scored with the formula above, then the list is ranked from highest to lowest score and the top `k` songs (default 5) are returned. The scoring rule judges one song at a time; the ranking rule turns those scores into an ordered shortlist.
+The *Retrieval-Augmented Generation* element uses a scoring tool to pick the top 15 songs that match the generated user taste profile, and they are handed over to Gemini to pick the top 5 candidates that make sense for the prompt.
 
-You can include a simple diagram or bullet list if helpful.
+It makes for a good demonstration on how AI can be used to augment the functionality of an existing program.
 
 ---
 
-## Getting Started
+## Architecture Overview
 
-### Setup
+See [`diagrams/architecture.mmd`](diagrams/architecture.mmd) for the full system diagram. In short, this is a two-call constrained RAG pipeline with the deterministic scorer as the retriever:
+
+```
+your text
+   |
+   v
+[LLM call 1: Profile Extraction]  ->  validated UserProfile + a short, generic
+   (src/llm.py: extract_profile)      "vibe" intro (or a friendly error if the
+                                       text carries no musical signal at all)
+   |                                  ^ printed to you immediately
+   v
+[Retriever: the ORIGINAL deterministic scorer]
+   (src/recommender.py: score_song / recommend_songs)
+   scores the whole catalog, returns a WIDE candidate set (~15 songs)
+   |
+   v
+[LLM call 2: Grounded Selection]  ->  final top-5, in ranked order, with an
+   (src/llm.py: select_recommendations)  intro grounded in the ACTUAL picks
+   |
+   v
+final recommendations: real score + real match facts (always shown),
+                        plus personified description when the model
+                        actually recognizes the song
+```
+
+---
+
+## Setup Instructions
 
 1. Create a virtual environment (optional but recommended):
 
@@ -45,155 +55,186 @@ You can include a simple diagram or bullet list if helpful.
    python -m venv .venv
    source .venv/bin/activate      # Mac or Linux
    .venv\Scripts\activate         # Windows
+   ```
+   You may have to execute ``Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned`` in PowerShell on Windows.
 
-2. Install dependencies
+2. Install dependencies:
 
-```bash
-pip install -r requirements.txt
-```
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-3. Run the app:
+3. Get a Google AI Studio API key at
+   https://aistudio.google.com/apikey, then copy `.env.example` to `.env` and
+   fill it in:
 
-```bash
-python -m src.main        # interactive: describe what you want in plain language
-python -m src.main demo   # deterministic sample profiles (reproducible, no key needed)
-```
+   ```
+   GEMINI_API_KEY=your_key_here
+   ```
 
-Natural-language mode uses Google AI Studio (Gemini) to turn your description
-into a taste profile and pick songs. To enable it, set `GEMINI_API_KEY` in your
-environment or a `.env` file (`GEMINI_API_KEY=...`). Without a key, `nl` mode
-falls back to a short manual questionnaire (press Enter to accept defaults), so
-the app always runs.
+4. Run the app:
+
+   ```bash
+   python -m src.main        # interactive: describe what you want in plain language
+   python -m src.main demo   # deterministic: sample profiles (reproducible, no key needed)
+   ```
+
+   Natural-language mode uses Gemini Flash Lite to turn your description
+   into a taste profile and pick songs. Without a key (or if the call fails), it
+   falls back to a short manual questionnaire — press Enter to accept the
+   defaults shown in `[brackets]` — so the app always runs, key or no key.
 
 ### Running Tests
-
-Run the starter tests with:
 
 ```bash
 pytest
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+`tests/test_recommender.py` covers the original deterministic scorer.
+`tests/test_llm.py` covers the AI layer entirely offline, using a fake LLM
+client — no API key or network needed to run the suite.
 
 ---
 
-## Sample Recommendation Output
+## Sample Interactions
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+Two real, end-to-end runs against the live system (Gemini as the LLM, `data/song2.csv` as the catalog):
 
 ```
+What would you like to hear? music to write README.md files to
+
 ============================================================
-  TOP RECOMMENDATIONS - high-energy pop
+  YOUR RECOMMENDATIONS
 ============================================================
-  Profile: genre=pop, mood=happy, energy=0.95, likes_acoustic=False
+  Let's keep you locked in with some steady, low-key background grooves to power through the documentation.
 ------------------------------------------------------------
-  1. David Guetta;Bebe Rexha - I'm Good (Blue)  (score: 6.42)
-       [pop / intense]
-       why:
-         - energy 0.96 is close to your target 0.95
-         - matches your favorite genre (pop)
-         - acousticness 0.00 leans electric, matching your preference
+  Get into the zone and power through your documentation with this focused selection of mellow grooves and electronic textures.
 
-  2. Rick Astley - Never Gonna Give You Up  (score: 6.39)
-       [disco / happy]
-       why:
-         - energy 0.94 is close to your target 0.95
-         - matches your mood (happy)
-         - acousticness 0.12 leans electric, matching your preference
-
-  3. Beast In Black - One Night in Tokyo  (score: 6.37)
-       [heavy metal / happy]
-       why:
-         - energy 0.98 is close to your target 0.95
-         - matches your mood (happy)
-         - acousticness 0.00 leans electric, matching your preference
-
-  4. Rammstein - Du hast  (score: 6.36)
-       [industrial metal / happy]
-       why:
-         - energy 0.92 is close to your target 0.95
-         - matches your mood (happy)
-         - acousticness 0.00 leans electric, matching your preference
-
-  5. IVE - After LIKE  (score: 6.31)
-       [k-pop / happy]
-       why:
-         - energy 0.92 is close to your target 0.95
-         - matches your mood (happy)
-         - acousticness 0.10 leans electric, matching your preference
-
-
-============================================================
-  TOP RECOMMENDATIONS - chill lofi
-============================================================
-  Profile: genre=lofi, mood=chill, energy=0.4, likes_acoustic=True
-------------------------------------------------------------
-  1. Jinsang - Affection  (score: 6.42)
-       [lofi / chill]
-       why:
-         - energy 0.19 is close to your target 0.40
-         - matches your favorite genre (lofi)
-         - matches your mood (chill)
-         - acousticness 0.91 leans acoustic like you prefer
-
-  2. Maroon 5 - Memories  (score: 6.06)
-       [pop / chill]
-       why:
-         - energy 0.33 is close to your target 0.40
-         - matches your mood (chill)
-         - acousticness 0.84 leans acoustic like you prefer
-
-  3. Idealism - Controlla  (score: 6.04)
-       [lofi / groovy]
-       why:
-         - energy 0.45 is close to your target 0.40
-         - matches your favorite genre (lofi)
-         - acousticness 0.55 leans acoustic like you prefer
-
-  4. potsu - i'm closing my eyes  (score: 5.81)
-       [lofi / chill]
-       why:
-         - energy 0.11 is close to your target 0.40
-         - matches your favorite genre (lofi)
-         - matches your mood (chill)
-         - acousticness 0.53 leans acoustic like you prefer
-
-  5. Lewis Capaldi - Someone You Loved  (score: 5.35)
+  1. Lewis Capaldi - Someone You Loved  (score: 6.39)
        [pop / groovy]
        why:
+         - A soaring, emotional vocal performance that anchors a steady, driving rhythm.
+         - Provides a dramatic backdrop when you need to push through tedious documentation blocks.
          - energy 0.41 is close to your target 0.40
-         - acousticness 0.75 leans acoustic like you prefer
+         - valence 0.45 is close to your target 0.50
+
+  2. Idealism - Controlla  (score: 6.20)
+       [lofi / groovy]
+       why:
+         - Dusty vinyl crackles and smooth hip-hop beats create an effortless, distraction-free bubble for coding.
+         - The ultimate background loop for deep-focus writing sessions.
+         - energy 0.45 is close to your target 0.40
+         - valence 0.55 is close to your target 0.50
+
+  3. Four Tet - Two Thousand and Seventeen  (score: 6.15)
+       [electronic / groovy]
+       why:
+         - Intricate electronic textures and gentle, hypnotic pulses keep your brain engaged without breaking your train of thought.
+         - Immaculate ambient pacing that makes drafting markdown sections feel like second nature.
+         - energy 0.47 is close to your target 0.40
+         - valence 0.50 is close to your target 0.50
+
+  4. Arctic Monkeys - Hello You  (score: 6.01)
+       [indie rock / groovy]
+       why:
+         - Laid-back indie rock instrumentation with a breezy, sophisticated melody.
+         - Brings an upbeat yet composed energy that helps beat writer's block.
+         - energy 0.45 is close to your target 0.40
+         - valence 0.65 is close to your target 0.50
+
+  5. Maroon 5 - Memories  (score: 5.99)
+       [pop / chill]
+       why:
+         - A gentle acoustic guitar loop paired with a soft, comforting vocal delivery.
+         - Keeps the mood light and steady as you polish the finishing touches on your project.
+         - energy 0.33 is close to your target 0.40
+         - valence 0.59 is close to your target 0.50
 ```
 
-> Note: the high-energy example shows a quirk the catalog deliberately keeps — *Du hast* is scored "happy" (mood is derived from Spotify's valence, which is high for the track), and it sits comfortably beside disco and k-pop because energy dominates the score. The lofi example matches cleanly on genre now that real lofi tracks (potsu, Idealism, Jinsang) are in the catalog.
+```
+What would you like to hear? provocative songs for staying awake
+
+============================================================
+  YOUR RECOMMENDATIONS
+============================================================
+  Let's keep things sharp, bold, and high-energy to help you power through.
+------------------------------------------------------------
+  Keep the energy surging and ward off sleep with this high-octane mix of driving beats and infectious hooks.
+
+  1. OneRepublic - I Ain't Worried  (score: 6.48)
+       [rock / happy]
+       why:
+         - That whistling hook and sun-drenched whistle-along chorus are impossible to sleep through.
+         - A breezy, driving rhythm that keeps your eyelids wide open.
+         - energy 0.80 is close to your target 0.80
+         - danceability 0.70 is close to your target 0.70
+
+  2. Blur - Song 2 - 2012 Remaster  (score: 6.41)
+       [britpop / happy]
+       why:
+         - An absolute jolt of adrenaline with that explosive, shout-along chorus.
+         - Pure chaotic britpop energy that instantly shakes off any lingering fatigue.
+         - energy 0.79 is close to your target 0.80
+         - danceability 0.67 is close to your target 0.70
+
+  3. Earth, Wind & Fire - September  (score: 6.34)
+       [jazz / happy]
+       why:
+         - That legendary horn section and funky groove are pure sunshine and instant vitality.
+         - An irresistible classic that gets your foot tapping and your mind fully alert.
+         - energy 0.83 is close to your target 0.80
+         - danceability 0.70 is close to your target 0.70
+
+  4. Dr. Dre;Snoop Dogg - Still D.R.E.  (score: 6.20)
+       [funk / energetic]
+       why:
+         - That iconic piano riff from Dr. Dre hits with an unmistakable, head-nodding swagger.
+         - An effortlessly cool hip-hop staple that keeps you locked into the zone.
+         - energy 0.78 is close to your target 0.80
+         - danceability 0.82 is close to your target 0.70
+
+  5. Calvin Harris;Dua Lipa - One Kiss (with Dua Lipa)  (score: 6.05)
+       [house / energetic]
+       why:
+         - Sleek, hypnotic house piano chords that pull you right onto the dancefloor.
+         - Dua Lipa's smooth vocals over that pulsing beat are the ultimate wake-up call.
+         - energy 0.86 is close to your target 0.80
+         - danceability 0.79 is close to your target 0.70
+```
+
+```
+What would you like to hear? how do i get my horse back from my ex-wife
+
+I can't help with legal advice, but if you share a mood, genre, or activity you'd like to hear, I can set up some music for you.
+
+Describe your taste (press Enter to accept the [default]):
+  favorite genre [none]: 
+...
+```
+
+> | Test Input | Evaluation Criteria | Result |
+> |---|---|---|
+> | "upbeat pop for a workout, nothing sad" | Accurate high-energy profile; grounded recommendations | Pass |
+> | "a soundtrack to watch paint dry to" | Infers low-energy profile from non-literal request | Pass |
+> | "provocative songs for staying awake" | High-energy profile; picks grounded | Pass |
+> | "music to write README.md files to" | Moderate-energy focus profile; picks grounded | Pass |
+> | "asdfgh" (no signal) | Refuses cleanly; triggers manual entry without crashing | Pass |
+
+The profile-extraction prompt is instructed to recognize when it has nothing to work with and instead returns a friendly clarifying message ("Tell me a bit more — a mood, genre, activity, or energy level to aim for."), which is printed directly, and the app then drops into the manual-entry fallback rather than guessing.
 
 ---
 
-## Experiments You Tried
+## Design Decisions
 
-Use this section to document the experiments you ran.
-> I picked the weighting shift experiment where the weighting of energy is doubled while the weighting of genre is halved. For user profiles like "chill lofi" and "acoustic headbanger" the results remained identical because song energy was the defining factor in these ranking choices, but "high-energy pop" experienced a large change as high energy songs were prioritized more heavily over songs within the pop genre.
-
----
-
-## Limitations and Risks
-
-Summarize some limitations of your recommender.
-
-> This model prioritizes recommending based on energy, this is by design to reduce the effects of locking in on a particular genre or mood but this does mean all recommended songs are roughly the same energy level. Categories like genre are matched by exact-string, so a user that prefers "pop" would miss "indie pop" songs. Tempo, valence, and danceability are also not used in scoring as the current user profile does not contain preference info for those categories.
+- **Why constrained RAG over a full agentic loop.** An agentic plan/act/check loop was considered, but it means an unbounded number of LLM calls per request, meaning I would likely hit rate limits (currently 15 requests per minute, 500 requests per day for Gemini 3.5 Flash Lite). This project uses exactly two calls per request instead — cheaper, faster, and easier to reason about and test, at the cost of the system being less "adaptive" than a true agent that could retry or re-plan on its own.
+- **Why a "known" gate instead of always asking for rich description.** While it wasn't experienced during testing, there is a possibility that Gemini might lie and make up characteristics about a song that it actually doesn't know. Gating description behind a self-reported `known: true/false` flag, and falling back to the plain deterministic facts otherwise, reduces the chance of this possibility.
+- **Why the deterministic facts are *always* shown, even for known songs.** Numbers (score, energy delta, etc.) are appended after any personified description rather than being replaced by it. This guarantees the user-facing "why" is never *purely* the model's word — there's always a reproducible, checkable fact underneath the flavor text.
+- **Why the catalog was rebuilt with real, deliberately-imperfect data.** The original 20-song catalog was small and partly fictional. It was replaced with 88 real songs sourced from a public Spotify audio-features dataset — but two data quirks were kept *on purpose* rather than cleaned up: `mood` is derived from valence/energy (not measured), and the source dataset's genre tags are self-reported by playlist and sometimes wrong (e.g. the Eagles filed under "folk"). This was a deliberate trade-off: a "clean" catalog would have hidden a genuinely important lesson about how upstream data quality problems propagate into an AI system's output (see Testing Summary). I also wanted to sneak in some songs that I like, but the 114K song dataset turned out to be more limited than I expected.
+- **Why every stage has an explicit deterministic fallback.** No API key, a network failure, or a malformed model response at any point falls back to something reproducible — a manual questionnaire with defaults, or the plain deterministic top-5 — rather than crashing or hanging. This was treated as a hard requirement, not a nice-to-have, since a recommender that only works when a third-party API is up isn't a very trustworthy recommender.
 
 ---
 
-## Reflection
+## Testing Summary
 
-Read and complete `model_card.md`:
-
-[**Model Card**](model_card.md)
-
-Write 1 to 2 paragraphs here about what you learned:
-
-- about how recommenders turn data into predictions
-- about where bias or unfairness could show up in systems like this
-
-
-
+- **What worked:** `tests/test_recommender.py` (2 tests) covers the original deterministic scorer's contract. `tests/test_llm.py` (12 tests) exercises the entire AI layer **offline**, using a fake LLM client that returns canned JSON — no API key or network needed. It checks: profile validation clamps out-of-range values instead of crashing; the model's `error` message and generic `note` are surfaced correctly; picks are constrained to the retrieved candidate ids (an invented id is silently dropped); the `known` gate correctly keeps or drops personified description; scores shown to the user are always the deterministic ones, never something the model reported; and every fallback path (empty/unparseable model output) degrades to the deterministic top-5 rather than failing. All 14 tests pass.
+- **What didn't work:** the deliberately-kept data imperfections showed up exactly as expected once natural-language mode was live. Rammstein's "Du hast" is scored as mood `happy` (its Spotify valence is high, even though the song doesn't read as happy to a listener), and it surfaces in high-energy/happy-leaning requests as a result — a small, concrete demonstration of how a flawed upstream label (mood, in this case a *derived* one) flows all the way through to a user-facing recommendation, even in a system that is otherwise fully deterministic and auditable at the scoring layer.
